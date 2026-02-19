@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing import image
 IMG_SIZE = 150
 
 # Load Model
-model = tf.keras.models.load_model("cat_dog_model.h5")
+model = tf.keras.models.load_model("cat_dog_model_prediction.h5")
 
 # Load image 
 img_path = r"C:\Users\siraj\Desktop\CNN\datasets\validation\dog\dog 2.jpg"

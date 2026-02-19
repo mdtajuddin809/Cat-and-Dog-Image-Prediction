@@ -13,7 +13,7 @@ st.write("Upload an image and the model will predict whether it is a Cat or a Do
 # Load Model
 @st.cache_resource
 def load_my_model():
-    model = load_model("Cat_dog_model.h5", compile=False)
+    model = load_model("cat_dog_model_prediction.h5", compile=False)
     return model
 
 model = load_my_model()
