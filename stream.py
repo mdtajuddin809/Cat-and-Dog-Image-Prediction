@@ -14,7 +14,7 @@ st.write("Upload an image and the model will predict whether it is a Cat or a Do
 # Load Model (Cache for performance)
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("Cat_dog_model.h5")
+    model = tf.keras.models.load_model("Cat_dog_model.h5", compile=False)
     return model
 
 model = load_model()
