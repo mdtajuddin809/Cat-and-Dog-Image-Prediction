@@ -2,6 +2,10 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import tensorflow as tf
+import json
+import zipfile
+import tempfile
+import os
 
 # Page config
 st.set_page_config(page_title="Cat vs Dog Classifier", page_icon="🐱🐶", layout="centered")
@@ -10,11 +14,39 @@ st.set_page_config(page_title="Cat vs Dog Classifier", page_icon="🐱🐶", lay
 st.title("🐈‍⬛ 🐕 Cat vs Dog Image Classifier")
 st.write("Upload an image and the model will predict whether it is a Cat or a Dog.")
 
-# Load Model
+# Load Model with batch_shape compatibility fix
 @st.cache_resource
 def load_my_model():
-    model = tf.keras.models.load_model("cat_dog_model_new.keras", compile=False)
-    return model
+    model_path = "cat_dog_model_new.keras"
+
+    try:
+        # First, try loading directly
+        model = tf.keras.models.load_model(model_path, compile=False)
+        return model
+
+    except TypeError as e:
+        if "batch_shape" not in str(e):
+            raise e
+
+        # Patch: replace "batch_shape" with "shape" in the model config
+        with zipfile.ZipFile(model_path, "r") as z:
+            names = z.namelist()
+            files = {name: z.read(name) for name in names}
+
+        # Fix the config.json
+        config_str = files["config.json"].decode("utf-8")
+        config_str = config_str.replace('"batch_shape"', '"shape"')
+        files["config.json"] = config_str.encode("utf-8")
+
+        # Write patched model to a temp file
+        patched_path = tempfile.mktemp(suffix=".keras")
+        with zipfile.ZipFile(patched_path, "w") as z:
+            for name, data in files.items():
+                z.writestr(name, data)
+
+        model = tf.keras.models.load_model(patched_path, compile=False)
+        os.remove(patched_path)
+        return model
 
 model = load_my_model()
 
