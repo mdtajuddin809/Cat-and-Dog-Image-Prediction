@@ -25,18 +25,27 @@ def load_my_model():
         return model
 
     except TypeError as e:
-        if "batch_shape" not in str(e):
+        msg = str(e)
+        if "batch_shape" not in msg and "shape" not in msg:
             raise e
 
-        # Patch: replace "batch_shape" with "shape" in the model config
+        # Patch: normalize InputLayer config keys for Keras 2.x
         with zipfile.ZipFile(model_path, "r") as z:
             names = z.namelist()
             files = {name: z.read(name) for name in names}
 
-        # Fix the config.json
-        config_str = files["config.json"].decode("utf-8")
-        config_str = config_str.replace('"batch_shape"', '"shape"')
-        files["config.json"] = config_str.encode("utf-8")
+        config = json.loads(files["config.json"].decode("utf-8"))
+        layers = config.get("config", {}).get("layers", [])
+        for layer in layers:
+            if layer.get("class_name") != "InputLayer":
+                continue
+            cfg = layer.get("config", {})
+            if "batch_shape" in cfg and "batch_input_shape" not in cfg:
+                cfg["batch_input_shape"] = cfg.pop("batch_shape")
+            if "shape" in cfg and "input_shape" not in cfg:
+                cfg["input_shape"] = cfg.pop("shape")
+            layer["config"] = cfg
+        files["config.json"] = json.dumps(config).encode("utf-8")
 
         # Write patched model to a temp file
         patched_path = tempfile.mktemp(suffix=".keras")
