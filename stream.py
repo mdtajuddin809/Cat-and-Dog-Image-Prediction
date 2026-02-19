@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-from keras.models import load_model
+import tensorflow as tf
 
 # Page config
 st.set_page_config(page_title="Cat vs Dog Classifier", page_icon="🐱🐶", layout="centered")
@@ -13,7 +13,7 @@ st.write("Upload an image and the model will predict whether it is a Cat or a Do
 # Load Model
 @st.cache_resource
 def load_my_model():
-    model = load_model("cat_dog_model_prediction.h5", compile=False)
+    model = tf.keras.models.load_model("cat_dog_model_new.keras", compile=False)
     return model
 
 model = load_my_model()
